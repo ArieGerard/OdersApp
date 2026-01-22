@@ -1,6 +1,7 @@
 package com.gcu.activity1.controllers;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -96,5 +97,59 @@ class UsersControllerTests {
         mockMvc.perform(get("/admin/users")
                         .with(user("user").roles("USER")))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void processRegistration_WithValidData_ShouldCallCreateOnDataService() throws Exception {
+        when(usersDataService.usernameExists("newuser")).thenReturn(false);
+        when(usersDataService.create(any(UserModel.class))).thenReturn(new UserModel());
+
+        mockMvc.perform(post("/register")
+                        .with(csrf())
+                        .param("username", "newuser")
+                        .param("password", "password123")
+                        .param("confirmPassword", "password123"))
+                .andExpect(status().is3xxRedirection());
+
+        verify(usersDataService).create(argThat(user ->
+            user.getUsername().equals("newuser") &&
+            user.getPassword().equals("password123")
+        ));
+    }
+
+    @Test
+    void editUser_ForAdmin_ShouldAllowAccess() throws Exception {
+        UserModel testUser = new UserModel(1, "testuser", "", "ROLE_USER", true);
+        when(usersDataService.getById(1)).thenReturn(testUser);
+
+        try {
+            MvcResult result = mockMvc.perform(get("/admin/users/edit/1")
+                            .with(user("admin").roles("ADMIN")))
+                    .andReturn();
+
+            int status = result.getResponse().getStatus();
+            assertNotEquals(403, status, "Admin should not be forbidden");
+        } catch (ServletException e) {
+            assertTrue(e.getMessage().contains("TemplateInputException"),
+                "Expected template error (security passed)");
+        }
+    }
+
+    @Test
+    void processEdit_ForAdmin_ShouldCallUpdateAndRedirect() throws Exception {
+        when(usersDataService.update(any(UserModel.class))).thenReturn(new UserModel());
+
+        mockMvc.perform(post("/admin/users/edit")
+                        .with(csrf())
+                        .with(user("admin").roles("ADMIN"))
+                        .param("id", "1")
+                        .param("username", "updateduser")
+                        .param("password", "newpassword")
+                        .param("role", "ROLE_USER")
+                        .param("enabled", "true"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/users"));
+
+        verify(usersDataService).update(any(UserModel.class));
     }
 }

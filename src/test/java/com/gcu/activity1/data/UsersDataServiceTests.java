@@ -2,6 +2,7 @@ package com.gcu.activity1.data;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import java.util.Optional;
@@ -131,5 +132,54 @@ class UsersDataServiceTests {
         assertNotEquals(hash1, hash2, "Same password should produce different hashes due to salting");
         assertTrue(encoder.matches(rawPassword, hash1));
         assertTrue(encoder.matches(rawPassword, hash2));
+    }
+
+    @Test
+    void getByUsername_WhenUserExists_ReturnsUserModel() {
+        when(usersRepository.findByUsername("testuser")).thenReturn(Optional.of(testUserEntity));
+
+        UserModel result = usersDataService.getByUsername("testuser");
+
+        assertNotNull(result);
+        assertEquals("testuser", result.getUsername());
+        assertEquals(1, result.getId());
+    }
+
+    @Test
+    void getByUsername_WhenUserNotFound_ReturnsNull() {
+        when(usersRepository.findByUsername("unknown")).thenReturn(Optional.empty());
+
+        UserModel result = usersDataService.getByUsername("unknown");
+
+        assertNull(result);
+    }
+
+    @Test
+    void update_ShouldHashPasswordWhenNotAlreadyHashed() {
+        String rawPassword = "newpassword";
+        String hashedPassword = "$2a$12$newhashvaluehere";
+
+        when(usersRepository.findById(1)).thenReturn(Optional.of(testUserEntity));
+        when(passwordEncoder.encode(rawPassword)).thenReturn(hashedPassword);
+        when(usersRepository.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UserModel updateModel = new UserModel(1, "testuser", rawPassword, "ROLE_USER", true);
+        usersDataService.update(updateModel);
+
+        verify(passwordEncoder).encode(rawPassword);
+        verify(usersRepository).save(argThat(entity -> entity.getPassword().equals(hashedPassword)));
+    }
+
+    @Test
+    void update_ShouldNotRehashAlreadyHashedPassword() {
+        String alreadyHashedPassword = "$2a$12$existinghashvalue";
+
+        when(usersRepository.findById(1)).thenReturn(Optional.of(testUserEntity));
+        when(usersRepository.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UserModel updateModel = new UserModel(1, "testuser", alreadyHashedPassword, "ROLE_USER", true);
+        usersDataService.update(updateModel);
+
+        verify(passwordEncoder, never()).encode(anyString());
     }
 }

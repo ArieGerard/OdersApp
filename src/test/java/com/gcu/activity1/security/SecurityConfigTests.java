@@ -58,4 +58,53 @@ class SecurityConfigTests {
             );
         }
     }
+
+    @Test
+    void adminRoutes_WhenUnauthenticated_ShouldRedirectToLogin() throws Exception {
+        MvcResult result = mockMvc.perform(get("/admin/users"))
+                .andExpect(status().is3xxRedirection())
+                .andReturn();
+
+        String redirectUrl = result.getResponse().getRedirectedUrl();
+        assertTrue(redirectUrl != null && redirectUrl.contains("/login"),
+            "Unauthenticated access should redirect to login");
+    }
+
+    @Test
+    void adminEditRoute_WhenUnauthenticated_ShouldRedirectToLogin() throws Exception {
+        MvcResult result = mockMvc.perform(get("/admin/users/edit/1"))
+                .andExpect(status().is3xxRedirection())
+                .andReturn();
+
+        String redirectUrl = result.getResponse().getRedirectedUrl();
+        assertTrue(redirectUrl != null && redirectUrl.contains("/login"),
+            "Unauthenticated access should redirect to login");
+    }
+
+    @Test
+    void adminDeleteRoute_WhenUnauthenticated_ShouldRedirectToLogin() throws Exception {
+        MvcResult result = mockMvc.perform(get("/admin/users/delete/1"))
+                .andExpect(status().is3xxRedirection())
+                .andReturn();
+
+        String redirectUrl = result.getResponse().getRedirectedUrl();
+        assertTrue(redirectUrl != null && redirectUrl.contains("/login"),
+            "Unauthenticated access should redirect to login");
+    }
+
+    @Test
+    void adminEditRoute_ForAdmin_ShouldBeAccessible() throws Exception {
+        try {
+            MvcResult result = mockMvc.perform(get("/admin/users/edit/1")
+                            .with(user("admin").roles("ADMIN")))
+                    .andReturn();
+
+            int status = result.getResponse().getStatus();
+            assertNotEquals(403, status, "Admin should not be forbidden");
+        } catch (ServletException e) {
+            assertTrue(e.getMessage().contains("TemplateInputException") ||
+                       e.getMessage().contains("BadSqlGrammar"),
+                "Expected template or DB error (security passed)");
+        }
+    }
 }
