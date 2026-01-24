@@ -41,44 +41,52 @@
     <div class="register-card">
         <h1 class="register-heading">Create Account</h1>
         
+        <!-- General validation errors summary -->
+        <div class="alert alert-danger" th:if="${#fields.hasAnyErrors()}" role="alert">
+            <strong>Please correct the errors below:</strong>
+        </div>
+        
         <form method="post" th:action="@{/register}" th:object="${registration}">
             <div class="mb-3">
                 <label for="username" class="form-label">Username</label>
                 <input type="text" 
                        class="form-control" 
+                       th:classappend="${#fields.hasErrors('username')} ? 'is-invalid'"
                        id="username" 
                        th:field="*{username}"
                        required
                        autofocus>
-                <span class="error-text" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">
-                    Username must be between 3 and 50 characters
-                </span>
+                <div class="invalid-feedback" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">
+                    Username error
+                </div>
             </div>
             
             <div class="mb-3">
                 <label for="password" class="form-label">Password</label>
                 <input type="password" 
                        class="form-control" 
+                       th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'"
                        id="password" 
                        th:field="*{password}"
                        placeholder="••••••••"
                        required>
-                <span class="error-text" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">
-                    Password must be between 6 and 50 characters
-                </span>
+                <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">
+                    Password error
+                </div>
             </div>
             
             <div class="mb-3">
                 <label for="confirmPassword" class="form-label">Confirm Password</label>
                 <input type="password" 
                        class="form-control" 
+                       th:classappend="${#fields.hasErrors('confirmPassword')} ? 'is-invalid'"
                        id="confirmPassword" 
                        th:field="*{confirmPassword}"
                        placeholder="••••••••"
                        required>
-                <span class="error-text" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}">
-                    Passwords do not match
-                </span>
+                <div class="invalid-feedback" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}">
+                    Confirm password error
+                </div>
             </div>
             
             <button type="submit" class="btn btn-primary" style="width: 100%;">Register</button>
