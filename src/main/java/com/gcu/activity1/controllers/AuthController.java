@@ -71,18 +71,21 @@ public class AuthController {
             Model model) {
 
         if (bindingResult.hasErrors()) {
+model.addAttribute("registration", registration);
             model.addAttribute("title", "Register");
             return "register";
         }
 
         if (!registration.passwordsMatch()) {
             bindingResult.rejectValue("confirmPassword", "error.registration", "Passwords do not match");
+            model.addAttribute("registration", registration);
             model.addAttribute("title", "Register");
             return "register";
         }
 
         if (usersDataService.usernameExists(registration.getUsername())) {
             bindingResult.rejectValue("username", "error.registration", "Username already exists");
+            model.addAttribute("registration", registration);
             model.addAttribute("title", "Register");
             return "register";
         }

@@ -3,3 +3,6 @@
 “We will avoid editing the same files unless coordinated.”
 “We will commit in small, descriptive steps.”
 “We will use pull requests for integration.”
+# OdersApp
+Repository for Cloud Computing
+
