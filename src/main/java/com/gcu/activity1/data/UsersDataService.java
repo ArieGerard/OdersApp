@@ -94,8 +94,11 @@ public class UsersDataService implements DataAccessInterface<UserModel>, UserDet
             return null;
         }
 
+        // Use existing password if new password is empty or null
         String password = user.getPassword();
-        if (!password.startsWith("$2a$")) {
+        if (password == null || password.trim().isEmpty()) {
+            password = existingEntity.getPassword();
+        } else if (!password.startsWith("$2a$")) {
             password = passwordEncoder.encode(password);
         }
 
